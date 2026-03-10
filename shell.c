@@ -7,7 +7,7 @@ int main(){
 		printf("> ");
 		char* s;
 		fgets(s);
-		char* c =  strtok(s, ' ');
+		char* c = strtok(s, ' ');
 		while(c != NULL){
 			
 
