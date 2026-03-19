@@ -1,0 +1,26 @@
+La libreria unistd.h permite el acceso a la API de POSIX (Portable Operating System Interface) del sistema operativo (usado en SO's que utilicen POSIX, principalmente aquellos Unix-based).
+
+Las funciones de la familia exec reciben el path al binario y luego el nombre
+por el que fue llamado. Esto permite, por ejemplo que archivos multi-call
+binaries puedan ejecutarse de distinta forma dependiendo de como fueron
+llamados. Ejemplos: BusyBox.
+
+En fork, la copia de memoria es CoW (Copy on Write). Al momento de ejecutarse
+fork, el kernel copia las tablas de páginas y marca las páginas como read-only.
+Ambos procesos (padre e hijo) apuntan a las mismas direcciones físicas en
+memoria. Cuando alguno de los procesos intenta escribir en una página de
+memoriase genera una excepción de hardware page fault pues es de solo lectura.
+Luego, el kernel ve que el intento de escritura es legítimo y crea una copia de
+esa página específica en una nueva ubicación en memoria y actualiza la tabla de
+páginas del proceso que quizo escribir, también dándole permiso de escritura.
+
+Para cada fork debe haber un wait, de esta forma el SO podrá liberar los
+recursos utilizados por el children generado por el fork. Si el padre no
+ejecuta un wait el proceso hijo, aún habiendo terminado, seguirá existiendo y
+consumiendo recursos decimos que el hijo se convierte en un zombie. Si el padre
+llegara a terminar antes que el hijo, entonces quedará huerfano, el kernel,
+subirá por el árbol genealógico del proceso hasta encontrar a un subreaper (un
+proceso que adopta al huerfano), que existirá pues el proceso de PID = 1
+(systemd o init) es subreaper. Dicho proceso adoptará al huerfano y
+eventualmente podrá ser liberado con un wait. Antiguamente los huerfanos eran
+adoptados por init y eran liberados automáticamente.
