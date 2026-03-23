@@ -1,24 +1,23 @@
-#include <stdio.h>
 #include <signal.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
-void handler(int s){
+void handler(int s) {
     printf("Señal recibida %i\n", s);
     exit(0);
 }
 
-int main(){
+int main() {
     struct sigaction sa;
     sa.sa_handler = handler;
-    
 
     sigaction(SIGINT, &sa, NULL);
     int pid = fork();
 
-    if(pid == 0){
-	    pause();
+    if (pid == 0) {
+        pause();
     }
 
     else {
