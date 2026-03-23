@@ -24,3 +24,13 @@ proceso que adopta al huerfano), que existirá pues el proceso de PID = 1
 (systemd o init) es subreaper. Dicho proceso adoptará al huerfano y
 eventualmente podrá ser liberado con un wait. Antiguamente los huerfanos eran
 adoptados por init y eran liberados automáticamente.
+
+
+Un pipe es un buffer en memoria (aprox 64KB). Si el pipe se llena, el proceso
+que escribe se bloqueará en su próxima llamada a write(). Si el pipe se vacía,
+el proceso que lee se bloqueará en su próxima llamada a read(). La función
+pipe(fd), donde fd es un array de dos enteros coloca en fd[0] el file
+descriptor para lectura y en fd[1] el file descriptor para escritura. Si un
+proceso está escribiendo pero el proceso lector hizo close(fd[0]) o murió (que
+cierra todos sus fds) entonces el SO envía una señal SIGPIPE al proceso
+escritor. SIGPIPE inmediatamente mata al proceso escritor.
