@@ -1,4 +1,6 @@
-La libreria unistd.h permite el acceso a la API de POSIX (Portable Operating System Interface) del sistema operativo (usado en SO's que utilicen POSIX, principalmente aquellos Unix-based).
+La libreria unistd.h permite el acceso a la API de POSIX (Portable Operating
+System Interface) del sistema operativo (usado en SO's que utilicen POSIX,
+principalmente aquellos Unix-based).
 
 Las funciones de la familia exec reciben el path al binario y luego el nombre
 por el que fue llamado. Esto permite, por ejemplo que archivos multi-call
@@ -25,7 +27,6 @@ proceso que adopta al huerfano), que existirá pues el proceso de PID = 1
 eventualmente podrá ser liberado con un wait. Antiguamente los huerfanos eran
 adoptados por init y eran liberados automáticamente.
 
-
 Un pipe es un buffer en memoria (aprox 64KB). Si el pipe se llena, el proceso
 que escribe se bloqueará en su próxima llamada a write(). Si el pipe se vacía,
 el proceso que lee se bloqueará en su próxima llamada a read(). La función
@@ -34,3 +35,26 @@ descriptor para lectura y en fd[1] el file descriptor para escritura. Si un
 proceso está escribiendo pero el proceso lector hizo close(fd[0]) o murió (que
 cierra todos sus fds) entonces el SO envía una señal SIGPIPE al proceso
 escritor. SIGPIPE inmediatamente mata al proceso escritor.
+
+Para la llamada de mmap(addr, len, prot, flags, fd, off): El primer argumento
+es la dirección de memoria donde comenzará el mapeo. Al pasar NULL como
+argumento, el kernel elige la dirección.
+El segundo argumento es el largo de la memoria a mapear.
+El tercer argumento refiere a las protecciones de memoria.
+El cuarto refiere a cómo se escriben los datos. MAP_SHARED indica que los
+cambios son visibles para otros procesos que mapeen la misma memoria.
+MAP_PRIVATE indica que al querer escribir en la memoria compartida se utiliza
+COW, es decir que se hace una copia privada de esa página y el resto de
+procesos no se enteran del cambio. MAP_FIXED indica que se mapeara la memoria
+exactamente en addr (problemática ya que puede pisar datos importantes o
+incluso el mismo código).
+El quinto es el fd.
+El sexto es el offset, que suele ser 0 cuando se refiere a porciones de
+memoria. Si se utilizara un archivo en disco podría modificarse para indicar
+una parte específica del archivo y no cargarlo entero en memoria. 
+
+Después de cada shm_open() es importante ejecutar shm_unlink() para que la
+porción de memoria sea liberada. Esta memoria puede ser observada en /dev/shm.
+Este es un directorio donde se monta un tmpfs (temporal filesystem) que vive
+únicamente en la RAM y es donde se ubican los archivos correspondientes a la
+memoria compartida.
