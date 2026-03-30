@@ -1,0 +1,4 @@
+Para ejecutar comandos como ls, cat, la terminal ejecuta un fork y luego un
+exec con el nombre del comando. Este se ejecuta y luego muere. Supongamos que
+tenemos un binario cd, entonces, la terminal hará un fork, ejecutara cd y luego
+morirá, por lo que el directorio no cambiará.

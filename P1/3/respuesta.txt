@@ -1,0 +1,4 @@
+Cuando ejecutamos el pipeline y observamos el uso del CPU asociado a ./yes
+vemos que es casi nulo. Esto ocurre porque ./yes llena el pipe de 64KB de
+manera muy rápida y no puede ejecutar mas writes. A medida que ./espero_yes lee
+un 'y', entonces ./yes podrá escribir un único 'y'.

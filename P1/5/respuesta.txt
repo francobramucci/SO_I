@@ -1,0 +1,7 @@
+free() no es una llamada al sistema, es una función de la biblioteca
+del espacio de usuario (libc). Su propósito es marcar un bloque de
+memoria previamente asignado por malloc() como disponible para futuras
+reutilizaciones dentro del mismo proceso. Generalmente no interactúa
+con el Kernel, aunque para bloques de memoria muy grandes, la libc
+puede decidir usar internamente la llamada al sistema munmap() para
+devolver esa RAM al sistema operativo.

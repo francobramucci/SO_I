@@ -1,0 +1,14 @@
+Al ejecutar el comando echo $$ en una terminal bash se obtiene el id de proceso
+(PID) de la terminal.
+
+env: Permite ejecutar un comando con ciertas variables de entorno modificadas.
+Si no se específica un comando, se imprime el entorno actual.
+
+ps: Imprime una selección de procesos con su respectivo PID. Si no se
+especifica ninguna opción, imprime los procesos asociados al usuario y terminal
+que invocan ps. Para ver todos los procesos ejecutar ps -e.
+
+pstree: Muestra los procesos corriendo en forma de arbol.
+
+strace: Corre el comando dado e intercepta y captura las system calls hechas
+por el proceso y las señales recibidas.

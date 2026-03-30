@@ -1,0 +1,6 @@
+Si no se libera la memoria con free, cuando el proceso termine, aún así el
+kernel limpiará toda la memoria utilizada por el proceso. La importancia del
+free radica en que si se hicieran malloc períodicamente sin ningún free,
+eventualmente no habría ningún bloque de memoria disponible para asignar. Es
+por eso que free permite liberar la memoria que ya no se utiliza para poder
+volver a asignarla.
