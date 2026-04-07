@@ -141,6 +141,10 @@ int mk_lsock() {
 int main() {
 
     signal(SIGINT, handler);
+
+    // Esta linea hace que el kernel elimine automáticamente al hijo y libere su PID. Evita zombies.
+    signal(SIGCHLD, SIG_IGN);
+
     int fd = shm_open("/shm", O_CREAT | O_RDWR, 0700);
     ftruncate(fd, 4);
 
