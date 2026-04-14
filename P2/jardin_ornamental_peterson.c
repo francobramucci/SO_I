@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-#define N_VISITANTES 20000000
+#define N_VISITANTES 200000
 
 int visitantes = 0;
 int flags[2] = {0};
@@ -16,7 +16,8 @@ void *molinete(void *arg) {
     for (i = 0; i < N_VISITANTES; i++) {
         flags[m_id] = 1;
         turno = otro;
-        while (turno == otro && flags[otro] == 1)
+        asm("mfence");
+        while ((turno == otro) && flags[otro])
             ;
         visitantes++;
 
