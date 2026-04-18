@@ -1,0 +1,13 @@
+Los valores de registro, no se comparten sino que cada thread tiene sus propios
+valores y al realizarse un cambio de contexto dichos valores se preservan en la
+porción de pila asignada a cada thread.
+
+El heap puede ser accedido por todos los threads, aunque resulta importante la
+sincronización ya que si ambos escriben al mismo tiempo o uno escribe y otro
+lee pueden ocurrir errores.
+
+Las variables globales también pueden ser accedidas por los threads.
+
+El stack es compartido. Aún así, cada thread tiene su porción de la pila para
+preservar su estado en un cambio de contexto. Si bien los threads pueden
+interactuar con la porción de pila de otros threads esto no es recomendado.

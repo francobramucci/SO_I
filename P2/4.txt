@@ -1,0 +1,18 @@
+volatile int x = 0;
+volatile int y = 0;
+
+void *wr(void *arg) {  x = 123; asm("mfence"); y = 1; }
+void *rd(void *arg) {
+    while (!y)
+        ;
+    asm("mfence");
+    assert(x == 123);
+}
+
+El assert puede fallar en un escenario donde ocurra store/store reordering. Por
+ejemplo que primero se haga visible el cambio y = 1 antes que x = 123. Para
+esto podemos agregar asm("mfence") para vaciar el store buffer y el nuevo valor
+de x sea visible para el otro núcleo. 
+
+También se puede dar un caso de load/load reordering donde primero se primero
+se lea x = 0 antes del valor de y. Para esto agregamos otro mfence.

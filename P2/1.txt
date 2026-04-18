@@ -1,0 +1,22 @@
+Si dividimos la tarea en varios threads donde cada uno recorre una parte del
+array entonces sí habrá diferencias. La primera opción es la segura, sólo se
+modifica el valor de encontrado cuando se encuentra el 42 en el array, es decir
+que sólo se accede a la sección crítica cuando hay un acierto. Puede llegar a
+darse una condición de carrera si dos threads encuentran al 42 y ambos quieren
+hacer encontrado = true, pero como ambos escribirán el mismo valor nunca se
+obtendrá un resultado incorrecto. Por otro lado, si consideramos la segunda
+opción resulta que en cada iteración se accede a la sección crítica (encontrado
+= encontrado || A[i] == 42). Entonces, al darse una condición de carrera, puede
+ocurrir la siguiente situación:
+
+Se parte desde que todavía no se encontró a 42 en A.
+1. Thread 1 está en una iteración j y A[j] != 42, se evalua encontrado | A[i]
+== 42 a false y se almacena dicho valor en un registro.
+2. El scheduler ahora asigna el procesador al Thread 2, por lo que el Thread 1
+queda pausado en el estado descrito.
+3. Se empieza a ejecutar Thread 2 y resulta que encuentra a 42 en A. Por lo
+tanto modifica la variable encontrado y le asigna true.
+4. Se reanuda el Thread 1 y escribe false en encontrado.
+
+Como ambos threads quieren escribir valores distintos, en este caso la race
+condition puede provocar resultados incorrectos.

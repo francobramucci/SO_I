@@ -1,0 +1,41 @@
+int x = 0, y = 0, a = 0, b = 0;
+
+void * foo(void *arg) { x = 1; a = y; return NULL; }
+void * bar(void *arg) { y = 1; b = x; return NULL; }
+
+int main() {
+    pthread_t t0, t1;
+    pthread_create(&t0, NULL, foo, NULL);
+    pthread_create(&t1, NULL, bar, NULL);
+    pthread_join(t0, NULL);
+    pthread_join(t1, NULL);
+    assert (a || b);
+    return 0;
+}
+
+Este código puede fallar si imaginamos un escenario con un procesador multinúcleo.
+
+Los procesadores tienen una porción de memoria de tipo asociativa (parecida a
+una TLB) llamada Store Buffer donde se almacenan las asignaciones de valores
+más recientes. Por ejemplo si se asigna x = 1, se asocia la dirección de x con
+el valor 1. Esta memoria se utiliza para que el procesador no tenga que estar
+accediendo constantemente a la memoria para almacenar o cargar valores.
+Eventualmente lo que está en el SB se reflejará en las memorias cachés y la
+RAM. El SB solo puede ser accedido por su correspondiente núcleo, ningún otro
+puede hacerlo. Sabiendo esto, se puede dar el siguiente escenario:
+
+El núcleo n0 ejecuta la instrucción x = 1. Esto se almacena en el SB.
+El núcleo n1 ejecuta la instrucciónm y = 1. Se almacena en el SB.
+n0 ejecuta a = y, sin embargo, como la asignación y = 1 está en el SB de n1, n0
+no puede acceder y toma un valor desactualizado de y = 0. Luego a = 0.
+Análogamente ocurre con b = x en n1. Entonces b = 0.
+
+De esta forma a | b = 0 y falla el assert.
+
+Para solucionar este problema se debe agregar una barrera de memoria cuya
+función es hacer que se reflejen todos los cambios del store buffer en la caché
+L1. La caché L1 es visible por otros núcleos. De esta forma todas las
+escrituras anteriores son visibles para todos los núcleos y los valores de
+variables que se leen están actualizados. Dicha barrera se implementa en C con
+asm("mfence") y en este caso deberían agregarse inmediatamente después de "x =
+1" y "y = 1".
