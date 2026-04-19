@@ -1,0 +1,11 @@
+Se utilizará un número de visitantes de 2000000 (2 millones) por molinete.
+
+sin sincronización (../jardin_ornamental.c): resultado incorrecto
+
+peterson con mfence (./5_jardin_ornamental_peterson.c): resultado correcto. ~0.3s
+
+incl con lock (./6/jardin_incl_lock.c): resultado correcto. ~0.06s
+
+pthread_mutex_t (../jardin_ornamental_mutex.c): resultado correcto. ~0.3s
+
+sin multithreading (./jardin_sin_multithreading.c): resultado correcto. ~0.02s

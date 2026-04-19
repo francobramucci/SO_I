@@ -1,0 +1,36 @@
+Si se considera el problema del jardin ornamental en un sistema con un único procesador, entonces sí hay problemas de concurrencia.
+
+Sean dos hilos que ejecutan el código de un molinete. Cómo la operación
+visitantes++ no es atómica, puede ocurrir que un hilo lea y almacene el valor
+de la variable visitantes en un registro, se cambie a otro hilo, y este
+incremente visitantes. Al regresar al hilo inicial, el valor de visitantes en
+el registro estará desactualizado, se le sumará uno y se almacenará en la
+dirección de memoria de visitantes, pero este valor será incorrecto.
+
+Si se implementa el algoritmo de Peterson no habrá problemas de store buffering
+ya que al ser un único procesador este siempre verá reflejadas las escrituras a
+memoria. Por otro lado el ordén de las operaciones se cumplirá siempre ya
+primero debe cargarse el valor de la variable a un registro, luego se
+incrementa y por último se almacena en la dirección de memoria correspondiente,
+las operaciones son dependientes y no puden ser reordenadas. Por lo tanto, no es necesario agregar barreras de memoria.
+
+Si utilizamos la función incl propuesta con un único procesador entonces la operación es atómica y no ocurrirán errores. En cambio, si se tiene más de un procesador, puede darse el siguiente escenario:
+
+1 El Núcleo 0 lee el valor 5 de la memoria.
+2 Un nanosegundo después, el Núcleo 1 también lee el valor 5 de la memoria.
+3 El Núcleo 0 le suma 1 (tiene 6) y lo escribe en memoria.
+4 El Núcleo 1 le suma 1 (tiene 6) y lo escribe en memoria.
+
+Esto ocurre ya que este incl se descompone en microoperaciones. En un contexto
+con multinúcleo, otro procesador puede leer a la variable en un estado
+intermedio del incl y escribir un valor incorrecto.
+
+Cuando uno se refiere a una operación atómica, se refiere a una operación que
+no tiene estados intermedios, o se ejecuta o no se ejecuta. Supongamos que
+tengo un procesador, entonces una única instrucción en assembler es una
+operación atómica, ya que el sistema no va a causar una interrupción para
+cambiar de contexto en medio de la ejecución de una instrucción. Si bien una
+operación puede ser atómica, puede que a nivel de procesador no lo sea, ya que
+se divide en micro operaciones.  
+
+Al considerar la misma operación pero con un lock, sólo un procesador puede acceder a esa línea de código y se evita el problema descrito anteriormente en el contexto multinúcleo.

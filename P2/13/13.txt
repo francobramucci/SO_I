@@ -1,0 +1,31 @@
+Considerando que se tiene el mfence después de la asignación de la bandera,
+esto significa que ambos threads saben que el otro quiere acceder a la sección
+crítica. La asignación del turno es posterior al fence. Sean n1 y n2 los
+núcleos que ejecutan los hilos t1 y t2.
+
+n1 ejecuta turno = 2, este cambio se almacena en el Store Buffer de n1, por lo
+que todavía no es visible para el resto de los núcleos, particularmente no es
+visible para n2. Cómo turno == 2 y flag[2] == 1 entonces se quedará esperando en
+el while.
+
+Análogamente, n2 ejecuta turno = 1 y dicho cambio se almacena en el Store
+Buffer de n2, por lo que no es visible para n1. Cómo turno == 1 y flag[1] == 1 entonces se quedará esperando en el while.
+
+Eventualmente los Store Buffers de los núcleos se vacían. Cuándo esto ocurre, los cambios se reflejan en la caché y en la memoria.
+
+Supongamos, sin pérdida de generalidad que el Store Buffer de n1 se vacía
+primero, entonces se actualiza la variable turno en su caché y en la memoria
+con turno = 2. Sin embargo, cómo n2 todavía no vació su Store Buffer, cuando
+quiera leer la variable turno en el while, la leera desde ahí y leera que turno
+= 1. Esto último se conoce como Store Forwarding. Es decir que n2 seguirá
+leyendo que turno es 1 hasta que no vacíe su propio Store Buffer.
+
+Sigue que en algún momento se vacía el Store Buffer de n2, esto provoca que la
+escritura turno = 1 se vea reflejada en su caché y memoria, por lo que se
+sobreescribirá la escritura hecha por n1 y la variable turno valdrá 2.
+
+Ahora ocurrirá que cuando n1 intente leer turno se fijará en el Store Buffer, cómo se vació antes, no encontrará a la variable turno, luego se fijará en su caché, pero dicha entrada estará marcada como inválida ya que todavía tiene el valor 1 y n2 lo actualizó a valor 2. Entonces n1 deberá buscar el valor de turno a memoria donde obtendrá que turno = 2. De esta forma la condición del while dejará de valer para t1 y entrará en la sección crítica mientras que t2 no lo hará ya que todavía valdrá la condición de su while.
+
+Sigue que flag[1] = 0 al salir del while y entonces t2 puede acceder a la zona crítica y así.
+
+

@@ -1,21 +1,21 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-#define N_VISITANTES 2000000
+
+#define N_VISITANTES 2
 
 int visitantes = 0;
-pthread_mutex_t mutex_visitantes = PTHREAD_MUTEX_INITIALIZER;
 
 void *molinete(void *arg) {
     int i;
     for (i = 0; i < N_VISITANTES; i++) {
-        pthread_mutex_lock(&mutex_visitantes);
-
-        visitantes++;
-
-        pthread_mutex_unlock(&mutex_visitantes);
+        int c;
+        /* sleep? */
+        c = visitantes;
+        sleep(1);
+        visitantes = c + 1;
+        /* sleep? */
     }
-
     return NULL;
 }
 
@@ -30,3 +30,10 @@ int main() {
 
     return 0;
 }
+
+/*
+ * Colocar sleep(1) entre c = visitantes y visitantes = c + 1 provoca que un
+ * thread lea el valor de visitantes y espere un segundo, en dicho segundo, el
+ * otro thread modifica visitantes y luego el thread original escribe el valor
+ * pisando lo que escribió el otro thread.
+ */

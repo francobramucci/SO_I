@@ -1,24 +1,22 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+
 #define N_VISITANTES 2000000
 
+static inline void incl(int *p) {
+    asm("lock; incl %0" : "+m"(*p) : : "memory");
+}
+
 int visitantes = 0;
-pthread_mutex_t mutex_visitantes = PTHREAD_MUTEX_INITIALIZER;
 
 void *molinete(void *arg) {
     int i;
     for (i = 0; i < N_VISITANTES; i++) {
-        pthread_mutex_lock(&mutex_visitantes);
-
-        visitantes++;
-
-        pthread_mutex_unlock(&mutex_visitantes);
+        incl(&visitantes);
     }
-
     return NULL;
 }
-
 int main() {
     pthread_t m1, m2;
     pthread_create(&m1, NULL, molinete, NULL);

@@ -1,0 +1,4 @@
+O0: normal, se incrementa en 1 la variable visitantes en cada iteración.
+O1: normal, similar a O0 pero con instrucciones más eficientes.
+O2: se traduce el for a un addl 2000000 luego cada thread hace visitantes += 2000000 y las posibilidades de que se obtenga un valor incorrecto son mucho menores ya que hay menos cantidad de acceso a sección crítica.
+O3: igual a O3.
