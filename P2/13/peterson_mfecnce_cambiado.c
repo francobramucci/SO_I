@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-#define N_VISITANTES 2000000
+#define N_VISITANTES 20000000
 
 int visitantes = 0;
 int flags[2] = {0};
