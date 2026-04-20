@@ -28,4 +28,5 @@ Ahora ocurrirá que cuando n1 intente leer turno se fijará en el Store Buffer, 
 
 Sigue que flag[1] = 0 al salir del while y entonces t2 puede acceder a la zona crítica y así.
 
-
+Esta explicación en realidad no es correcta. Se puede dar una traza donde el
+programa falla. Esta esta en traza.png
