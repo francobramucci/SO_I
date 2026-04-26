@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <pthread.h>
 
 /*
  * Para probar, usar netcat. Ej:
@@ -19,66 +19,63 @@
  */
 
 typedef struct {
-    char* k;
-    char* v;
+        char *k;
+        char *v;
 } kv;
 
 typedef struct {
-    kv* arr;
-    int tam;
-    int ult;
+        kv *arr;
+        int tam;
+        int ult;
 } _vec;
 
-typedef _vec* vect;
+typedef _vec *vect;
 vect map;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-vect inicializar(int s){
-    // Corregido: Reservar el tamaño de la estructura, no del puntero
-    vect vec = malloc(sizeof(_vec)); 
+vect inicializar(int s) {
+    vect vec = malloc(sizeof(_vec));
     vec->arr = malloc(s * sizeof(kv));
     vec->tam = s;
     vec->ult = -1;
-    return vec; // Faltaba el return
+    return vec;
 }
 
-void insertar(vect vec, char* key, char* val){
-    for(int i = 0; i <= vec->ult; i++){
-        if(strcmp(key, vec->arr[i].k) == 0){
-            // Liberar memoria vieja antes de asignar nueva
+void insertar(vect vec, char *key, char *val) {
+    for (int i = 0; i <= vec->ult; i++) {
+        if (strcmp(key, vec->arr[i].k) == 0) {
             free(vec->arr[i].v);
-            vec->arr[i].v = strdup(val); 
+            vec->arr[i].v = strdup(val);
             return;
         }
     }
 
-    if(vec->ult + 1 == vec->tam){
+    if (vec->ult + 1 == vec->tam) {
         vec->tam *= 2;
         vec->arr = realloc(vec->arr, sizeof(kv) * vec->tam);
     }
 
     vec->ult++;
-    // strdup reserva la memoria necesaria para el texto
     vec->arr[vec->ult].k = strdup(key);
     vec->arr[vec->ult].v = strdup(val);
 }
 
-char* buscar(vect vec, char* key){
-    for(int i = 0; i <= vec->ult; i++){
-        if(strcmp(key, vec->arr[i].k) == 0)
+char *buscar(vect vec, char *key) {
+    for (int i = 0; i <= vec->ult; i++) {
+        if (strcmp(key, vec->arr[i].k) == 0)
             return vec->arr[i].v;
     }
     return NULL;
 }
 
-void eliminar(vect vec, char* key){
-    for(int i = 0; i <= vec->ult; i++){
-        if(strcmp(key, vec->arr[i].k) == 0){
+void eliminar(vect vec, char *key) {
+    for (int i = 0; i <= vec->ult; i++) {
+        if (!strcmp(key, vec->arr[i].k)) {
             free(vec->arr[i].v);
             vec->arr[i].v = NULL;
         }
     }
-} 
+}
 
 void quit(char *s) {
     perror(s);
@@ -106,54 +103,51 @@ int fd_readline(int fd, char *buf) {
     return i;
 }
 
-void* handle_conn(void* arg) {
-    int csock = *((int*) arg);
+void *handle_conn(void *arg) {
+    int csock = *((int *)arg);
     char buf[200];
-    char reply[200]; 
+    char reply[200];
     int rc;
-    char** ptr = NULL;
-    write(csock, "HOLA\n", 5);
+
+    char *ptr = NULL;
+
     while (1) {
         /* Atendemos pedidos, uno por linea */
         rc = fd_readline(csock, buf);
-        char* comando = strtok_r(buf, " \n\0", ptr);
-        sprintf(reply, "%s\n", comando); 
-        write(csock, reply, strlen(reply));
-        if(!strcmp(comando, "PUT")){
-            char* key = strtok_r(NULL, " \n\0", ptr); 
-            char* value = strtok_r(NULL, " \n\0", ptr);
+        char *comando = strtok_r(buf, " \n\0", &ptr);
+
+        if (!strcmp(comando, "PUT")) {
+            char *key = strtok_r(NULL, " \n\0", &ptr);
+            char *value = strtok_r(NULL, " \n\0", &ptr);
             pthread_mutex_lock(&mutex);
             insertar(map, key, value);
-            write(csock, "SI\n", 3);
             pthread_mutex_unlock(&mutex);
-            
+
             write(csock, "OK\n", 3);
         }
-        
-        else if(!strcmp(comando, "GET")){
-            char* val;
-            char* key = strtok(NULL, " \n\0");
-            pthread_mutex_lock(&mutex);
-            strcpy(val, buscar(map, key));
-            pthread_mutex_unlock(&mutex);
-            if(val){
-                sprintf(reply, "OK %s\n", val);
-                free(val);
-                write(csock, reply, strlen(reply));
-            }
-            else
-                write(csock, "NOTFOUND\n", 9);
-        } 
 
-        else if(!strcmp(comando, "DEL")){
-            char* key = strtok(NULL, " \n\0");
+        else if (!strcmp(comando, "GET")) {
+            char *val;
+            char *key = strtok_r(NULL, " \n\0", &ptr);
+            pthread_mutex_lock(&mutex);
+            val = buscar(map, key);
+            pthread_mutex_unlock(&mutex);
+            if (val) {
+                sprintf(reply, "OK %s\n", val);
+                write(csock, reply, strlen(reply));
+            } else
+                write(csock, "NOTFOUND\n", 9);
+        }
+
+        else if (!strcmp(comando, "DEL")) {
+            char *key = strtok_r(NULL, " \n\0", &ptr);
             pthread_mutex_lock(&mutex);
             eliminar(map, key);
             pthread_mutex_unlock(&mutex);
             write(csock, "OK\n", 3);
         }
 
-        else{
+        else {
             write(csock, "EINVAL\n", 7);
         }
 
@@ -182,7 +176,7 @@ void wait_for_clients(int lsock) {
     pthread_detach(id);
 
     /* Volvemos a esperar conexiones */
-    //close(csock);
+    // close(csock);
     wait_for_clients(lsock);
 }
 
