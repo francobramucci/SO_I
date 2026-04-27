@@ -14,7 +14,7 @@
 
 #define MAX_ELEMENTOS 10000
 #define MAX_EVENTOS 1000
-
+#define MAX_HILOS 4
 /*
  * Para probar, usar netcat. Ej:
  *
@@ -35,6 +35,9 @@ typedef struct {
 typedef _vec *vect;
 vect map;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int listen_sock;
+int epollfd;
 
 vect inicializar(int s) {
     vect vec = malloc(sizeof(_vec));
@@ -106,20 +109,19 @@ int fd_readline(int fd, char *buf) {
     return i;
 }
 
-void *handle_conn(void *arg) {
-    int csock = *((int *)arg);
-    free(arg);
+int handle_conn(int csock) {
     char buf[200];
     char reply[200];
     int rc;
 
     char *ptr = NULL;
 
-    while (1) {
-        /* Atendemos pedidos, uno por linea */
-        rc = fd_readline(csock, buf);
-        char *comando = strtok_r(buf, " \n\0", &ptr);
+    /* Atendemos pedidos, uno por linea */
+    rc = fd_readline(csock, buf);
 
+    if(rc > 0){
+        char *comando = strtok_r(buf, " \n\0", &ptr);
+        
         if (!strcmp(comando, "PUT")) {
             char *key = strtok_r(NULL, " \n\0", &ptr);
             char *value = strtok_r(NULL, " \n\0", &ptr);
@@ -154,34 +156,23 @@ void *handle_conn(void *arg) {
         else {
             write(csock, "EINVAL\n", 7);
         }
-
-        if (rc < 0)
-            quit("read... raro");
-
-        if (rc == 0) {
-            /* linea vacia, se cerró la conexión */
-            close(csock);
-            return NULL;
-        }
     }
-}
 
-void wait_for_clients(int lsock) {
-    int *csock = malloc(sizeof(int));
+    if (rc < 0)
+        quit("read... raro");
 
-    /* Esperamos una conexión, no nos interesa de donde viene */
-    *csock = accept(lsock, NULL, NULL);
-    if (*csock < 0)
-        quit("accept");
+    if (rc == 0) {
+        /* linea vacia, se cerró la conexión */
+//        struct epoll_event ev;
+//        if (epoll_ctl(epollfd, EPOLL_CTL_DEL, csock, &ev) == -1) {
+//            perror("epoll_ctl: csock");
+//            exit(EXIT_FAILURE);
+//        }
+        close(csock);
+        return 1;
+    }
 
-    /* Atendemos al cliente */
-    pthread_t id;
-    pthread_create(&id, NULL, handle_conn, csock);
-    pthread_detach(id);
-
-    /* Volvemos a esperar conexiones */
-    // close(csock);
-    wait_for_clients(lsock);
+    return 0;
 }
 
 /* Crea un socket de escucha en puerto 3942 TCP */
@@ -217,24 +208,10 @@ int mk_lsock() {
     return lsock;
 }
 
-int main() {
-    map = inicializar(MAX_ELEMENTOS);
-    int listen_sock;
-    listen_sock = mk_lsock();
 
-    struct epoll_event ev, events[MAX_EVENTOS];
-
-    int epollfd = epoll_create1(0);
-    if (epollfd == -1) {
-        quit("epoll_create1");
-    }
-
-    ev.events = EPOLLIN;
-    ev.data.fd = listen_sock;
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &ev) == -1) {
-        perror("epoll_ctl: listen_sock");
-        exit(EXIT_FAILURE);
-    }
+void* gestionar_epoll(void* arg){
+    struct epoll_event events[MAX_EVENTOS];
+    struct epoll_event ev;
 
     for (int nfds, n, conn_sock;;) {
         nfds = epoll_wait(epollfd, events, MAX_EVENTOS, -1);
@@ -246,7 +223,58 @@ int main() {
                 conn_sock = accept(listen_sock, NULL, NULL);
                 if (conn_sock == -1)
                     quit("accept");
+
+                ev.events = EPOLLIN | EPOLLONESHOT;
+                ev.data.fd = conn_sock;
+                if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
+                    perror("epoll_ctl: conn_sock");
+                    exit(EXIT_FAILURE);
+                }
+
+            }
+
+            else {
+                conn_sock = events[n].data.fd;
+                int sock_closed = handle_conn(conn_sock);
+                if (!sock_closed){
+                    ev.events = EPOLLIN | EPOLLONESHOT;
+                    ev.data.fd = conn_sock;
+                    if (epoll_ctl(epollfd, EPOLL_CTL_MOD, conn_sock, &ev) == -1) {
+                        perror("epoll_ctl: conn_sock");
+                        exit(EXIT_FAILURE);
+                    }
+                }
             }
         }
     }
+
+}
+
+int main() {
+    map = inicializar(MAX_ELEMENTOS);
+    listen_sock = mk_lsock();
+
+    struct epoll_event ev;
+    epollfd = epoll_create1(0);
+
+    if (epollfd == -1) {
+        quit("epoll_create1");
+    }
+
+    ev.events = EPOLLIN;
+    ev.data.fd = listen_sock;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &ev) == -1) {
+        perror("epoll_ctl: listen_sock");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_t id[MAX_HILOS];
+
+    for(int i = 0; i < MAX_HILOS; i++){
+        pthread_create(&id[i], NULL, gestionar_epoll, NULL);
+    }
+
+    pthread_join(id[0], NULL); 
+
+    return 0;
 }
