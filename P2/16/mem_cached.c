@@ -119,9 +119,9 @@ int handle_conn(int csock) {
     /* Atendemos pedidos, uno por linea */
     rc = fd_readline(csock, buf);
 
-    if(rc > 0){
+    if (rc > 0) {
         char *comando = strtok_r(buf, " \n\0", &ptr);
-        
+
         if (!strcmp(comando, "PUT")) {
             char *key = strtok_r(NULL, " \n\0", &ptr);
             char *value = strtok_r(NULL, " \n\0", &ptr);
@@ -163,11 +163,11 @@ int handle_conn(int csock) {
 
     if (rc == 0) {
         /* linea vacia, se cerró la conexión */
-//        struct epoll_event ev;
-//        if (epoll_ctl(epollfd, EPOLL_CTL_DEL, csock, &ev) == -1) {
-//            perror("epoll_ctl: csock");
-//            exit(EXIT_FAILURE);
-//        }
+        //        struct epoll_event ev;
+        //        if (epoll_ctl(epollfd, EPOLL_CTL_DEL, csock, &ev) == -1) {
+        //            perror("epoll_ctl: csock");
+        //            exit(EXIT_FAILURE);
+        //        }
         close(csock);
         return 1;
     }
@@ -208,8 +208,7 @@ int mk_lsock() {
     return lsock;
 }
 
-
-void* gestionar_epoll(void* arg){
+void *gestionar_epoll(void *arg) {
     struct epoll_event events[MAX_EVENTOS];
     struct epoll_event ev;
 
@@ -236,7 +235,7 @@ void* gestionar_epoll(void* arg){
             else {
                 conn_sock = events[n].data.fd;
                 int sock_closed = handle_conn(conn_sock);
-                if (!sock_closed){
+                if (!sock_closed) {
                     ev.events = EPOLLIN | EPOLLONESHOT;
                     ev.data.fd = conn_sock;
                     if (epoll_ctl(epollfd, EPOLL_CTL_MOD, conn_sock, &ev) == -1) {
@@ -247,7 +246,6 @@ void* gestionar_epoll(void* arg){
             }
         }
     }
-
 }
 
 int main() {
@@ -261,7 +259,7 @@ int main() {
         quit("epoll_create1");
     }
 
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLEXCLUSIVE;
     ev.data.fd = listen_sock;
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &ev) == -1) {
         perror("epoll_ctl: listen_sock");
@@ -270,11 +268,11 @@ int main() {
 
     pthread_t id[MAX_HILOS];
 
-    for(int i = 0; i < MAX_HILOS; i++){
+    for (int i = 0; i < MAX_HILOS; i++) {
         pthread_create(&id[i], NULL, gestionar_epoll, NULL);
     }
 
-    pthread_join(id[0], NULL); 
+    pthread_join(id[0], NULL);
 
     return 0;
 }
