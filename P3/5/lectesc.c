@@ -1,3 +1,4 @@
+#include "rw-lock_write_preferred.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #define N 5
 #define ARRLEN 10240
 
+rw_mutex mutex;
 int arr[ARRLEN];
 
 void *escritor(void *arg) {
@@ -15,8 +17,11 @@ void *escritor(void *arg) {
     while (1) {
         sleep(random() % 3);
         printf("Escritor %d escribiendo\n", num);
-        for (i = 0; i < ARRLEN; i++)
+        for (i = 0; i < ARRLEN; i++) {
+            wr_lock(&mutex);
             arr[i] = num;
+            wr_unlock(&mutex);
+        }
     }
     return NULL;
 }
@@ -26,11 +31,15 @@ void *lector(void *arg) {
     int num = arg - (void *)0;
     while (1) {
         sleep(random() % 3);
+
+        rd_lock(&mutex);
         v = arr[0];
         for (i = 1; i < ARRLEN; i++) {
             if (arr[i] != v)
                 break;
         }
+        rd_unlock(&mutex);
+
         if (i < ARRLEN)
             printf("Lector %d, error de lectura\n", num);
         else
@@ -40,6 +49,7 @@ void *lector(void *arg) {
 }
 
 int main() {
+    rw_mutex_init(&mutex);
     pthread_t lectores[M], escritores[N];
     int i;
 
