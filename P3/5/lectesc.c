@@ -1,4 +1,4 @@
-#include "rw-lock_write_preferred.h"
+#include "rw-lock_fair.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,11 +17,11 @@ void *escritor(void *arg) {
     while (1) {
         sleep(random() % 3);
         printf("Escritor %d escribiendo\n", num);
+        wr_lock(&mutex);
         for (i = 0; i < ARRLEN; i++) {
-            wr_lock(&mutex);
             arr[i] = num;
-            wr_unlock(&mutex);
         }
+        wr_unlock(&mutex);
     }
     return NULL;
 }
@@ -38,6 +38,7 @@ void *lector(void *arg) {
             if (arr[i] != v)
                 break;
         }
+        sleep(3);
         rd_unlock(&mutex);
 
         if (i < ARRLEN)

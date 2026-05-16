@@ -1,11 +1,5 @@
 #include "rw-lock_read_preferred.h"
 
-struct _rw_mutex {
-        pthread_mutex_t acc_m;
-        sem_t sem;
-        int acc;
-};
-
 void rw_mutex_init(rw_mutex *m) {
     pthread_mutex_init(&m->acc_m, NULL);
     sem_init(&m->sem, 0, 1);

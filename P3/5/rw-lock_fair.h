@@ -5,6 +5,8 @@
 // rd_unlock -> decrementar acc, el último hace sem = 1
 // wr_lock -> sem = 0
 // wr_unlock -> sem = 1
+// En realidad esta versión es justa si consideramos semáforos fuertes
+// Por defecto los semáforos de POSIX son débiles
 
 typedef struct _rw_mutex {
         pthread_mutex_t acc_m;
