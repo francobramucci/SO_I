@@ -1,0 +1,1 @@
+En esta implementación del problema de múltiples productores y consumidores se asegura de que aquel valor generado por un productor será consumido por un consumidor ya que el productor siempre espera a que haya un consumidor esperando la entrada. La ejecución de productores y consumidores será siempre alternada. Esto puede ser una desventaja.
