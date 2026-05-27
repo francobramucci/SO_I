@@ -1,6 +1,5 @@
-#include <pthread.h>
+#include <omp.h>
 #include <stdio.h>
-#include <unistd.h>
 
 #define N_VISITANTES 1000000
 #define CANT_HILOS 4
@@ -14,6 +13,7 @@ void lock(int i) {
     asm("mfence");
 
     int m = 0;
+
     for (int j = 0; j < CANT_HILOS; j++)
         m = (m > numeros[j] ? m : numeros[j]);
 
@@ -35,32 +35,19 @@ void unlock(int i) {
     numeros[i] = 0;
 }
 
-void *molinete(void *arg) {
-    int i = *((int *)arg);
-
+void molinete(int i) {
     for (int k = 0; k < N_VISITANTES; k++) {
         lock(i);
         visitantes++;
         unlock(i);
     }
-
-    return NULL;
 }
 
 int main() {
-    pthread_t m[CANT_HILOS];
-    int arr[CANT_HILOS];
-
-    for (int i = 0; i < CANT_HILOS; i++) {
-        arr[i] = i;
-    }
-
-    for (int i = 0; i < CANT_HILOS; i++) {
-        pthread_create(&m[i], NULL, molinete, arr + i);
-    }
-
-    for (int i = 0; i < CANT_HILOS; i++) {
-        pthread_join(m[i], NULL);
+    #pragma omp parallel num_threads(CANT_HILOS)
+    {
+        int id = omp_get_thread_num();
+        molinete(id);
     }
 
     printf("Hoy hubo %d visitantes!\n", visitantes);
