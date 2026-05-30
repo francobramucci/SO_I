@@ -1,3 +1,4 @@
+#include "barrier.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 float arr1[N];
 float arr2[N];
 
-pthread_barrier_t barrera;
+barrier barrera;
 
 static inline int min(int x, int y) {
     return x < y ? x : y;
@@ -38,17 +39,18 @@ void *thr(void *arg) {
 
     for (i = 0; i < ITERS; i++) {
         calor(arr1, lo, hi, arr2);
-        pthread_barrier_wait(&barrera);
+        barrier_wait(&barrera);
         calor(arr2, lo, hi, arr1);
-        pthread_barrier_wait(&barrera);
+        barrier_wait(&barrera);
     }
+    return NULL;
 }
 
 int main() {
     pthread_t w[W];
     float f;
     int i;
-    pthread_barrier_init(&barrera, NULL, W);
+    barrier_init(&barrera, W);
 
     /*
      * No cambiamos la semilla, por lo que este programa
