@@ -7,6 +7,7 @@
 typedef struct {
         sem_t sem;
         sem_t sem1;
+        sem_t sem2;
         int n;
         int cont;
         pthread_mutex_t mut;
