@@ -7,6 +7,8 @@
 typedef struct _my_cond_t {
         sem_t sem;
         sem_t sem1;
+        sem_t sem2;
+        int n;
 } my_cond_t;
 
 // Inicializa la variable de condición.
