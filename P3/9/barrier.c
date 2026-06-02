@@ -15,9 +15,9 @@ void barrier_wait(barrier *b) {
     sem_post(&b->sem2);
 
     pthread_mutex_lock(&b->mut);
+    b->n++;
     if (b->n >= b->cont)
         sem_wait(&b->sem2);
-    b->n++;
     pthread_mutex_unlock(&b->mut);
 
     if (!sem_trywait(&b->sem)) {
