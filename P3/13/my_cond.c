@@ -20,6 +20,9 @@ void my_cond_wait(my_cond_t *cond, pthread_mutex_t *mutex) {
     // Baja el semáforo y espera un signal o un broadcast.
     sem_wait(&(cond->sem));
 
+    // Esta linea se ejecutará siempre luego de un signal.
+    sem_post(&cond->sem2); // unlock
+
     // pide el mutex.
     pthread_mutex_lock(mutex);
 }
@@ -31,9 +34,9 @@ void my_cond_signal(my_cond_t *cond) {
         cond->n--;
         // Levanta el semáforo.
         sem_post(&(cond->sem));
+    } else {
+        sem_post(&cond->sem2);
     }
-
-    sem_post(&cond->sem2); // unlock
 }
 
 void my_cond_broadcast(my_cond_t *cond) {
