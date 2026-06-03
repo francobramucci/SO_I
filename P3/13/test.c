@@ -85,5 +85,6 @@ int main() {
         pthread_create(&consumidores[i], NULL, cons_f, i + (void *)0);
 
     pthread_join(productores[0], NULL); /* Espera para siempre */
+
     return 0;
 }

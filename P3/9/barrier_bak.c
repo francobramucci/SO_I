@@ -11,26 +11,28 @@ void barrier_init(barrier *b, int cont) {
 }
 
 void barrier_wait(barrier *b) {
+    sem_wait(&b->sem2);
+    sem_post(&b->sem2);
+
     pthread_mutex_lock(&b->mut);
     b->n++;
-
-    if (b->n == b->cont) {
-        sem_wait(&b->sem2);
-        sem_post(&b->sem1);
+    if (b->n >= b->cont) {
+        sem_trywait(&b->sem2);
+        pthread_mutex_unlock(&b->mut);
+    } else {
+        pthread_mutex_unlock(&b->mut);
+        sem_wait(&b->sem1);
     }
-    pthread_mutex_unlock(&b->mut);
 
-    sem_wait(&b->sem1);
     sem_post(&b->sem1);
 
     pthread_mutex_lock(&b->mut);
     b->n--;
     if (b->n == 0) {
-        sem_wait(&b->sem1);
+        while (!sem_trywait(&b->sem1))
+            ;
+        b->n = 0;
         sem_post(&b->sem2);
     }
     pthread_mutex_unlock(&b->mut);
-
-    sem_wait(&b->sem2);
-    sem_post(&b->sem2);
 }

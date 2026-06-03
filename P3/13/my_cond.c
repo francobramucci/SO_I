@@ -64,11 +64,3 @@ void my_cond_destroy(my_cond_t *cond) {
     sem_destroy(&cond->sem1);
     sem_destroy(&cond->sem2);
 }
-
-/*
- * El problema con esta implementación es que las señales no se ignoran si no
- * hay ningún hilo esperando, sino que aumentan el valor del semáforo, por lo
- * que si llega un thread después de un signal se despertará automáticamente ya
- * que hará sem_wait en un semáforo con valor positivo, que es un
- * comportamiento no deseado.
- */
