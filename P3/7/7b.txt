@@ -1,0 +1,24 @@
+Veamos por que no se pueden ordenar los recursos para evitar el problema.
+
+Supongamos que modificamos el código original para que al menos uno de los 
+fumadores pida los recursos en otro orden.
+
+Vamos a fijarnos en el primer recurso que pide cada fumador.
+
+Los 3 fumadores no pueden pedir el mismo recurso primero ya que por el enunciado
+del problema uno de ellos tiene una cantidad ilimitada de este y no necesita
+pedir dicho recurso. Luego, sabemos que al menos dos fumadores difieren en el 
+primer recurso que piden.
+
+Llamemos A, B a los fumadores que difieren y rA, rB a los recursos que piden
+primero.
+
+Supongamos que nos encontramos en el caso de que el agente haya repuesto rA y
+rB. Si, luego del agente, ejecutamos los threads de los fumadores A y B para que 
+solo logren decrementar el semáforo de rA y rB respectivamente, ya nos 
+encontramos en una situación de deadlock pues todos los recursos van a estar 
+agotados (los semáforos de los recursos repuestos fueron decrementados a 0 y el 
+último siempre fue 0) y ningún fumador logrará obtener los dos recursos que 
+necesita para fumar por lo que el agente tampoco repondrá.
+
+Por lo tanto, siempre existe una traza en el que se genera un deadlock.
