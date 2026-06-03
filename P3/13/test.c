@@ -1,3 +1,4 @@
+#include "my_cond.h"
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -15,23 +16,19 @@
  */
 int ult = -1;
 int *buffer[SZ];
-sem_t espacio;
-sem_t valores;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+my_cond_t espacio;
+my_cond_t valores;
 
 void enviar(int *p) {
-    pthread_mutex_lock(&mutex);
     ult++;
     buffer[ult] = p;
-    pthread_mutex_unlock(&mutex);
 }
 
 int *recibir() {
     int *p;
-    pthread_mutex_lock(&mutex);
     p = buffer[ult];
     ult--;
-    pthread_mutex_unlock(&mutex);
     return p;
 }
 
@@ -44,9 +41,13 @@ void *prod_f(void *arg) {
         *p = random() % 100;
         printf("Productor %d: produje %p->%d\n", id, p, *p);
 
-        sem_wait(&espacio);
+        pthread_mutex_lock(&mutex);
+        while (ult >= SZ - 1) {
+            my_cond_wait(&espacio, &mutex);
+        }
         enviar(p);
-        sem_post(&valores);
+        my_cond_signal(&valores);
+        pthread_mutex_unlock(&mutex);
     }
     return NULL;
 }
@@ -56,20 +57,26 @@ void *cons_f(void *arg) {
     while (1) {
         sleep(random() % 3);
 
-        sem_wait(&valores);
+        pthread_mutex_lock(&mutex);
+        while (ult < 0) {
+            my_cond_wait(&valores, &mutex);
+        }
         int *p = recibir();
-        sem_post(&espacio);
+        my_cond_signal(&espacio);
+        pthread_mutex_unlock(&mutex);
+
         printf("Consumidor %d: obtuve %p->%d\n", id, p, *p);
+
         free(p);
     }
     return NULL;
 }
 
 int main() {
+    my_cond_init(&espacio);
+    my_cond_init(&valores);
     pthread_t productores[M], consumidores[N];
     int i;
-    sem_init(&espacio, 0, SZ);
-    sem_init(&valores, 0, 0);
 
     for (i = 0; i < M; i++)
         pthread_create(&productores[i], NULL, prod_f, i + (void *)0);
