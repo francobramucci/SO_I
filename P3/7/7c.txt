@@ -1,0 +1,5 @@
+En la solución propuesta en "fumadores.c" los fumadores intentan tomar los
+recursos de manera atómica, si pudieron hacerlo exitosamente entonces fumarán,
+sino, liberarán los recursos que hubieran tomado para que otro intente fumar.
+De esta forma, ningún fumador toma un solo recurso y se queda esperando
+infinitamente otro, sino que lo libera.
