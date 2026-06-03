@@ -1,0 +1,33 @@
+7)
+
+a) 
+Un ejemplo de deadlock sería el siguiente:
+- El agente dispone papel y tabaco
+- El fumador3 toma el papel y se queda esperando infinitamente los fósforos que no fueron dispuestos por el agente
+- El fumador1 toma el tabaco y se queda esperando infinitamente el papel que lo tiene el fumador3.
+- El fumador 2 se queda esperando infinitamente los fósforos ya que los fósforos no fueron dispuestos por el agente.
+- Ningún fumador puede fumar, no se aumenta el semáforo "otra_vez", por lo que el agente tampoco puede avanzar.
+- Ningún thread puede progresar, todos están bloqueados. Deadlock.
+
+b)
+Ordenar los recursos tampoco soluciona el problema. Supongamos sin pérdida de
+generalidad que los recursos dispuestos por el agente son tabaco y papel. Si
+fumador2 o fumador3 esperan primero por tabaco o papel respectivamente antes
+que por fósforos podría ocurrir que tomasen el tabaco o papel y esperasen los
+fósforos infinitamente y nunca soltarían el papel o el tabaco provocando un
+deadlock. Entonces necesariamente primero deberán esperar por los fósforos y
+luego por el papel/tabaco. Por lo tanto en esta primera iteración fumador1
+podrá fumar y habrá otra iteración. En la próxima iteración, si el agente
+provee papel y tabaco, ocurrirá lo mismo que en la anterior iteración y no habrá
+problemas. Supongamos entonces que el agente provee fósforos y (sin pérdida de
+generalidad) tabaco. Recordemos que fumador3 espera primero por los fósforos,
+puede ocurrir que fumador3 agarre los fósforos y espere infinitamente por el
+papel, generando un deadlock. Por lo tanto fumador3 no debería esperar primero
+por los fósforos, contradicción. Luego independientemente del orden en el que esperan los recursos ocurrirá un deadlock.
+
+c)
+En la solución propuesta en "fumadores.c" los fumadores intentan tomar los
+recursos de manera atómica, si pudieron hacerlo exitosamente entonces fumarán,
+sino, liberarán los recursos que hubieran tomado para que otro intente fumar.
+De esta forma, ningún fumador toma un solo recurso y se queda esperando
+infinitamente otro, sino que lo libera.
