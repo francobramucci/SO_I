@@ -1,0 +1,31 @@
+En la implementación dada, un posible deadlock que podría ocurrir sería el 
+siguiente:
+
+Iniciamos el programa y ejecutamos el thread principal (main) hasta por lo menos
+realizar la primer iteración del while completamente (es decir, logramos reponer
+los dos ingredientes que nos tocó en el caso generado). Supongamos que el agente
+se encontró en el caso 1 (repuso un fósforo y un tabaco).
+
+Hacemos un cambio de contexto y ejecutamos el thread del fumador 1 hasta por lo 
+menos decrementar el semáforo del tabaco.
+
+Cambiamos nuevamente de contexto y ejecutamos el thread del fumador 2 hasta
+decrementar el semáforo del fósforo.
+
+En este momento ya nos encontramos en un deadlock pues los 4 threads no pueden
+continuar con la ejecución del programa pues para cada thread ocurre lo 
+siguiente:
+
+    * Thread Fumador 1: Al retomar su ejecución va a quedarse esperando en el
+      semáforo del papel (nunca se incrementó por lo que está en 0).
+    
+    * Thread Fumador 2: Al retomar su ejecución va a quedarse esperando en el
+      semáforo del tabaco (se encuentra en 0 pues el thread fumador 1 lo 
+      decrementó).
+    
+    * Thread Fumador 3: De manera similar al fumador 1, al ejecutar el thread va
+      a quedarse esperando en el semáforo del papel.
+    
+    * Thread Agente: Va a esperar en el semáforo "otra vez" pues en su primera
+      primera iteración lo decrementó a 0 y como todos los threads fumadores se
+      quedaron bloqueados antes de "fumar" nunca se incrementó.
