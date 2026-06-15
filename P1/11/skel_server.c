@@ -92,6 +92,7 @@ void wait_for_clients(int lsock, int *pa) {
     int cpid = fork();
 
     if (cpid == 0) {
+	printf("Atiendo al cliente %i\n", csock);
         /* Atendemos al cliente */
         close(lsock);
         handle_conn(csock, pa);

@@ -69,7 +69,7 @@ void qsort_sec(int a[], int n) {
     qsort_sec(a + p + 1, n - p - 1);
 }
 
-// Crea hilos recursivamente por el omp parallel
+// Crea hilos recursivamente por el omp parallel (no tan eficiente)
 void qsort_omp_sections(int *a, int n) {
     if (n < 2)
         return;
@@ -86,6 +86,25 @@ void qsort_omp_sections(int *a, int n) {
         }
     }
 }
+
+/*
+ * El enfoque en el que se llama afuera de la recursión a omp parallel es
+ * incorrecto ya que se creará un único equipo de hilos. Cada vez que hay un
+ * section se asigna un hilo, como los sections son llamadas recursivas a la
+ * función de qsort, ese hilo a su vez tendrá más sections que cubrir, pero
+ * como la cantidad de hilos es más chica que la cantidad de llamadas
+ * recursivas de la función, eventualmente no habrá más hilos que asignar a las
+ * sections y el algoritmo no podrá progresar. Para solucionar esto, usaremos
+ * tasks
+ */
+
+// void qsort_omp_sections_wrapper(int *a, int n) {
+//     #pragma omp parallel
+//     {
+//         #pragma omp single
+//         sections_aux(a, n);
+//     }
+// }
 
 void tasks_aux(int *a, int n) {
     if (n < 2)

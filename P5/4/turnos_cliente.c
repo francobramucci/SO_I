@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #define BUFF_SIZE 1024
-#define N_DEF 500
+#define N_DEF 20000
 
 int main(int argc, char *argv[]) {
     // Se le puede pasar un N por consola, si no por defecto conecta 500 clientes
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(8000);
+    servaddr.sin_port = htons(4040);
     inet_pton(AF_INET, "127.0.0.1", &servaddr.sin_addr);
     tsp.tv_sec = 0;
     tsp.tv_nsec = 100000;

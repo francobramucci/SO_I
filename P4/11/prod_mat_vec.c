@@ -13,11 +13,15 @@ int main(int argc, char **argv) {
     int count = N / size;
     int v[N];
     int A[N][N];
+    int buf[count][N];
+
     if (rank == 0) {
+        printf("Ingresar vector:\n");
         for (int i = 0; i < N; i++) {
             scanf("%d", &v[i]);
         }
 
+        printf("Ingresar matriz:\n");
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 scanf("%d", &A[i][j]);
@@ -29,34 +33,51 @@ int main(int argc, char **argv) {
                 MPI_Send(A[i * count + j], N, MPI_INT, i, 0, MPI_COMM_WORLD);
             }
         }
+
     } else {
-        int buf[count][N];
         for (int j = 0; j < count; j++) {
-            MPI_Recv(buf[j], N, MPI_INT, 0, 0, MPI_COMM_WORLD);
+            MPI_Recv(buf[j], N, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
         }
     }
 
     MPI_Bcast(v, N, MPI_INT, 0, MPI_COMM_WORLD);
 
-    for (int i = 0; i < n; i++) {
-        x[i] = 0;
-        for (int j = 0; j < n; j++)
-            x[i] += A[i][j] * v[j];
+    int res[N] = {0};
+    for (int i = 0; i < count; i++) {
+        for (int j = 0; j < N; j++)
+            res[i] += buf[i][j] * v[j];
     }
+
+    MPI_Send(res, N, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
+        // Sumo mi parte de las columnas
+        int res[N] = {0};
+        for (int i = 0; i < count; i++) {
+            for (int j = 0; j < N; j++)
+                res[i] += A[i][j] * v[j];
+        }
+
+        // Sumo las filas que quedaron sin asignar
+        for (int i = count * size; i < N; i++) {
+            for (int j = 0; j < N; j++)
+                res[i] += A[i][j] * v[j];
+        }
+
+        for (int i = 1; i < size; i++) {
+            int buf[N];
+            MPI_Recv(&buf, N, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, NULL);
+            for (int j = 0; j < N; j++) {
+                res[j] += buf[j];
+            }
+        }
+        printf("El vector resultado es: \n");
+        for (int i = 0; i < N; i++) {
+            printf("%d\n", res[i]);
+        }
     }
 
-    MPI_Scatter(A[i]
     MPI_Finalize();
 
-/*
-    int i, j;
-    int A[N][N], v[n], x[n];
-     
-    Leer A y v
-    
-    
-*/
     return 0;
 }
