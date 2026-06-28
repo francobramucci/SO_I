@@ -15,6 +15,8 @@
 
 sem_t tabaco, papel, fosforos, otra_vez;
 pthread_mutex_t mutex;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 
 void agente() {
     while (1) {
@@ -39,17 +41,20 @@ void *fumador1(void *arg) {
         pthread_mutex_lock(&mutex);
         if (sem_trywait(&tabaco)) {
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
         if (sem_trywait(&papel)) {
             sem_post(&tabaco);
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
 
         fumar(1);
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
+        pthread_cond_broadcast(&cond);
     }
 }
 
@@ -58,17 +63,20 @@ void *fumador2(void *arg) {
         pthread_mutex_lock(&mutex);
         if (sem_trywait(&fosforos)) {
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
         if (sem_trywait(&tabaco)) {
             sem_post(&fosforos);
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
 
         fumar(2);
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
+        pthread_cond_broadcast(&cond);
     }
 }
 
@@ -77,17 +85,20 @@ void *fumador3(void *arg) {
         pthread_mutex_lock(&mutex);
         if (sem_trywait(&papel)) {
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
         if (sem_trywait(&fosforos)) {
             sem_post(&papel);
             pthread_mutex_unlock(&mutex);
+            pthread_cond_wait(&cond, &mut);
             continue;
         }
 
         fumar(3);
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
+        pthread_cond_broadcast(&cond);
     }
 }
 
