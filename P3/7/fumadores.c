@@ -15,19 +15,29 @@
 
 sem_t tabaco, papel, fosforos, otra_vez;
 pthread_mutex_t mutex;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+sem_t f1para2;
+sem_t f1para3;
+sem_t f2para1;
+sem_t f2para3;
+sem_t f3para1;
+sem_t f3para2;
 
 void agente() {
     while (1) {
         sem_wait(&otra_vez);
         int caso = random() % 3;
-        if (caso != 0)
+        if (caso != 0) {
             sem_post(&fosforos);
-        if (caso != 1)
+            printf("Agente da fosforos\n");
+        }
+        if (caso != 1) {
             sem_post(&papel);
-        if (caso != 2)
+            printf("Agente da papel\n");
+        }
+        if (caso != 2) {
             sem_post(&tabaco);
+            printf("Agente da tabaco\n");
+        }
     }
 }
 
@@ -39,66 +49,87 @@ void fumar(int fumador) {
 void *fumador1(void *arg) {
     while (1) {
         pthread_mutex_lock(&mutex);
+        printf("fumador 1 entro\n");
         if (sem_trywait(&tabaco)) {
+            sem_post(&f1para2);
+            sem_post(&f1para3);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f2para1);
+            sem_wait(&f3para1);
             continue;
         }
         if (sem_trywait(&papel)) {
             sem_post(&tabaco);
+            sem_post(&f1para2);
+            sem_post(&f1para3);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f2para1);
+            sem_wait(&f3para1);
             continue;
         }
 
         fumar(1);
+        printf("1 larga\n");
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
-        pthread_cond_broadcast(&cond);
     }
 }
 
 void *fumador2(void *arg) {
     while (1) {
         pthread_mutex_lock(&mutex);
+        printf("fumador 2 entro\n");
         if (sem_trywait(&fosforos)) {
+            sem_post(&f2para1);
+            sem_post(&f2para3);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f1para2);
+            sem_wait(&f3para2);
             continue;
         }
         if (sem_trywait(&tabaco)) {
             sem_post(&fosforos);
+            sem_post(&f2para1);
+            sem_post(&f2para3);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f1para2);
+            sem_wait(&f3para2);
             continue;
         }
 
         fumar(2);
+        printf("2 larga\n");
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
-        pthread_cond_broadcast(&cond);
     }
 }
 
 void *fumador3(void *arg) {
     while (1) {
         pthread_mutex_lock(&mutex);
+        printf("fumador 3 entro\n");
         if (sem_trywait(&papel)) {
+            sem_post(&f3para1);
+            sem_post(&f3para2);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f1para3);
+            sem_wait(&f2para3);
             continue;
         }
         if (sem_trywait(&fosforos)) {
             sem_post(&papel);
+            sem_post(&f3para1);
+            sem_post(&f3para2);
             pthread_mutex_unlock(&mutex);
-            pthread_cond_wait(&cond, &mut);
+            sem_wait(&f1para3);
+            sem_wait(&f2para3);
             continue;
         }
 
         fumar(3);
+        printf("3 larga\n");
         pthread_mutex_unlock(&mutex);
         sem_post(&otra_vez);
-        pthread_cond_broadcast(&cond);
     }
 }
 
@@ -108,6 +139,13 @@ int main() {
     sem_init(&papel, 0, 0);
     sem_init(&fosforos, 0, 0);
     sem_init(&otra_vez, 0, 1);
+    sem_init(&f1para2, 0, 0);
+    sem_init(&f1para3, 0, 0);
+    sem_init(&f2para1, 0, 0);
+    sem_init(&f2para3, 0, 0);
+    sem_init(&f3para1, 0, 0);
+    sem_init(&f3para2, 0, 0);
+
     pthread_create(&s1, NULL, fumador1, NULL);
     pthread_create(&s2, NULL, fumador2, NULL);
     pthread_create(&s3, NULL, fumador3, NULL);
